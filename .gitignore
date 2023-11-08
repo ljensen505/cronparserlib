@@ -1,0 +1,4 @@
+/venv
+cronfile.example
+/__pycache__/
+/.vscode/
