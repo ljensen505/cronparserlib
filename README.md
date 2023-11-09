@@ -4,7 +4,7 @@ A python library for parsing a crontab file and determining when a job will next
 
 ## How it works
 
-cronparserlib is separated into two logical sections: cronparser and cronjob. The CronParser class is fairly straightforward and attempts to read the crontab text file in chunks. Each chunk is divided by comments in the file itself (for example, `# minutely` or `# daily`). Use of a buffer here probably isn't necessary, but a very large crontab file might make use of it.
+**cronparserlib** is separated into two logical sections: cronparser and cronjob. The CronParser class is fairly straightforward and attempts to read the crontab text file in chunks. Each chunk is divided by comments in the file itself (for example, `# minutely` or `# daily`). Use of a buffer here probably isn't necessary, but a very large crontab file might make use of it.
 
 With the exception of storing MAILTO, all lines which have been commented out will be ignored. (this includes job13 of the sample file)
 
