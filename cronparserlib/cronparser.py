@@ -1,5 +1,6 @@
-from pprint import pprint
-from cronjob import CronJob
+from datetime import datetime
+from os import path
+from cronparserlib.cronjob import CronJob
 
 
 class CronParser:
@@ -12,7 +13,16 @@ class CronParser:
         self.email_dest: str = ""
         self.buffer: list[CronJob] = []
         self.buffer_count = 0  # only used when debugging
+        self.now = datetime.now()
 
+        if not path.exists(self.cronfile):
+            raise FileNotFoundError(f"{self.cronfile} not found")
+
+    def parse(self) -> None:
+        """
+        Parses the cronfile and prints the results to stdout.
+        """
+        print(f"Job run @ {self.now.strftime('%Y-%m-%d %H:%M')}")
         self._read_file()
 
     def _read_file(self) -> None:
@@ -39,8 +49,14 @@ class CronParser:
             if "MAILTO" in comment:
                 self._set_email(line)
             return
-
-        self.buffer.append(CronJob([arg for arg in line.split(" ") if arg]))
+        self.now = datetime(
+            year=self.now.year,
+            month=self.now.month,
+            day=self.now.day,
+            hour=self.now.hour,
+            minute=self.now.minute,
+        )
+        self.buffer.append(CronJob([arg for arg in line.split(" ") if arg], self.now))
 
     def _read_buffer(self) -> None:
         """
@@ -48,8 +64,8 @@ class CronParser:
         Used for debugging.
         """
         if self.buffer:
-            print(f"BUFFER {self.buffer_count}:")
-            pprint(self.buffer)
+            for job in self.buffer:
+                print(job)
             self.buffer_count += 1
             self.buffer = []
 
