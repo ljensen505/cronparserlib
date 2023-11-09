@@ -22,7 +22,7 @@ class CronParser:
         """
         Parses the cronfile and prints the results to stdout.
         """
-        print(f"Job run @ {self.now.strftime('%Y-%m-%d %H:%M')}")
+        print(f"Job started @ {self.now.strftime('%Y-%m-%d %H:%M')}")
         self._read_file()
 
     def _read_file(self) -> None:

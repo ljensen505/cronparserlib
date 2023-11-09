@@ -3,6 +3,10 @@ import calendar
 
 
 class CronJob:
+    """
+    Representation of a cron job. Contains all the core logic for finding the next run time.
+    """
+
     def __init__(self, job: list[str], now: datetime):
         self.job: list[str] = job
         self.minute = job[0]
@@ -31,16 +35,38 @@ class CronJob:
         return f"{self._job_name()}: {self.job[:5]}\n\tnext run @ {self._next_run()}\n"
 
     def _job_name(self) -> str:
+        """
+        Returns the name of the job, as found in the last argument of the cron job.
+        """
         return self.cmd[-1].split("/")[-1].split(".")[0]
 
     def _next_run(self) -> str:
+        """
+        Calculates the next run time of the job.
+        May be called recursively if the next run time is not valid.
+        """
         self._calc_min()
         self._calc_hour()
-        self._calc_day()
+        self._calc_dom()
         self._calc_month()
+        self._check_dow()
         return self.job_time.strftime("%Y-%m-%d %H:%M")
 
+    def _check_dow(self) -> None:
+        """
+        Checks if the next run time is valid for the day of the week.
+        If not, increments the minute and commences recursion.
+        """
+        dow_set: set[int] = self._calc_dow_set()
+        is_valid_dow = (self.job_time.weekday() + 1) % 7 in dow_set
+        if not is_valid_dow:
+            self._inc_minute()
+            self._next_run()
+
     def _calc_dom_set(self) -> set[int]:
+        """
+        Calculates and returns the set of days of the month that the job is allowed to run on.
+        """
         dom_set: set[int] = set()
         if self.dom == "*":
             dom_set.update(
@@ -72,6 +98,9 @@ class CronJob:
         return dom_set
 
     def _calc_dow_set(self) -> set[int]:
+        """
+        Calculates and returns the set of days of the week that the job is allowed to run on.
+        """
         dow_set: set[int] = set()
         if self.dow == "*":
             dow_set.update(range(0, 7))
@@ -88,6 +117,9 @@ class CronJob:
         return dow_set
 
     def _calc_month(self) -> None:
+        """
+        Calculates the month of the next run.
+        """
         if self.month == "*":
             return
 
@@ -109,17 +141,19 @@ class CronJob:
             while self.job_time.month not in permitted:
                 self._inc_month()
 
-    def _calc_day(self) -> None:
+    def _calc_dom(self) -> None:
+        """
+        Calculates the day of the month of the next run.
+        """
         dom_set: set[int] = self._calc_dom_set()
-        dow_set: set[int] = self._calc_dow_set()
 
-        while (
-            self.job_time.day not in dom_set
-            or (self.job_time.weekday() + 1) % 7 not in dow_set
-        ):
+        while self.job_time.day not in dom_set:
             self._inc_dom()
 
     def _process_range(self, day_set: set[int], num_range: str) -> None:
+        """
+        Processes a range of days of the month or week and adds them to a set.
+        """
         if num_range.isdigit():
             day_set.add(int(num_range))
             return
@@ -127,6 +161,9 @@ class CronJob:
         day_set.update(range(int(start), int(end) + 1))
 
     def _calc_hour(self) -> None:
+        """
+        Calculates the hour of the next run.
+        """
         if self.hour == "*":
             return
 
@@ -149,6 +186,9 @@ class CronJob:
                 self._inc_hour()
 
     def _calc_min(self) -> None:
+        """
+        Calculates the minute of the next run.
+        """
         if self.minute == "*":
             return
 
@@ -164,6 +204,9 @@ class CronJob:
             return
 
     def _inc_minute(self) -> None:
+        """
+        Increments the minute of the job time.
+        """
         minutes = self.job_time.minute + 1
         if minutes > 59:
             minutes = 0
@@ -172,6 +215,9 @@ class CronJob:
         self.job_time = self.job_time.replace(minute=minutes)
 
     def _inc_hour(self) -> None:
+        """
+        Increments the hour of the job time.
+        """
         hours = int(self.job_time.hour) + 1
         if hours > 23:
             hours = 0
@@ -180,6 +226,9 @@ class CronJob:
         self.job_time = self.job_time.replace(hour=hours)
 
     def _inc_dom(self) -> None:
+        """
+        Increments the day of the month of the job time.
+        """
         dom = int(self.job_time.day) + 1
         year = self.job_time.year
         month = self.job_time.month
@@ -197,6 +246,9 @@ class CronJob:
         self.job_time = self.job_time.replace(day=dom)
 
     def _inc_month(self) -> None:
+        """
+        Increments the month of the job time.
+        """
         month = int(self.job_time.month) + 1
         if month > 12:
             month = 1
@@ -205,4 +257,7 @@ class CronJob:
         self.job_time = self.job_time.replace(month=month)
 
     def _inc_year(self) -> None:
+        """
+        Increments the year of the job time.
+        """
         self.job_time = self.job_time.replace(year=self.job_time.year + 1)
